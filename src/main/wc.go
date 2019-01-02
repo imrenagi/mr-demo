@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
-	"mapreduce"
 	"os"
+	"github.com/imrenagi/6.824/src/mapreduce"
+	"strings"
+	"unicode"
+	"strconv"
 )
 
 //
@@ -15,6 +18,14 @@ import (
 //
 func mapF(filename string, contents string) []mapreduce.KeyValue {
 	// Your code here (Part II).
+	tokens := strings.FieldsFunc(contents, func(r rune) bool {
+		return !unicode.IsLetter(r)
+	})
+	kvs := make([]mapreduce.KeyValue, 0)
+	for _, val := range tokens {
+		kvs = append(kvs, mapreduce.KeyValue{Key:val, Value:"1"})
+	}
+	return kvs
 }
 
 //
@@ -24,6 +35,12 @@ func mapF(filename string, contents string) []mapreduce.KeyValue {
 //
 func reduceF(key string, values []string) string {
 	// Your code here (Part II).
+	var sum int64
+	for _, s := range values {
+		val, _ := strconv.ParseInt(s, 10, 64)
+		sum = sum + val
+	}
+	return fmt.Sprintf("%d", sum)
 }
 
 // Can be run in 3 ways:
