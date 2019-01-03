@@ -46,24 +46,31 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 	for i := 0; i < ntasks; i++ {
 		wg.Add(1)
 		go func(i int, c chan string, jobName string, mapFiles []string, phase jobPhase, n_other int) {
-			srv := <-c
+			success := false
 
-			ok := call(srv, "Worker.DoTask", DoTaskArgs{
-				JobName:       jobName,
-				File:          mapFiles[i],
-				Phase:         phase,
-				TaskNumber:    i,
-				NumOtherPhase: n_other,
-			}, nil)
-			if ok {
-				wg.Done()
+			for !success {
+				srv := <-c
+
+				ok := call(srv, "Worker.DoTask", DoTaskArgs{
+					JobName:       jobName,
+					File:          mapFiles[i],
+					Phase:         phase,
+					TaskNumber:    i,
+					NumOtherPhase: n_other,
+				}, nil)
+				if ok {
+					wg.Done()
+					success = true
+				}
 				c <- srv
 			}
+
+
 		}(i, c, jobName, mapFiles, phase, n_other)
 	}
 	wg.Wait()
 
-	close(registerChan)
+	//close(registerChan)
 
 	// All ntasks tasks have to be scheduled on workers. Once all tasks
 	// have completed successfully, schedule() should return.
