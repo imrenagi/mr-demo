@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"mapreduce"
 	"os"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/imrenagi/mr-demo/src/mapreduce"
 )
 
 //
