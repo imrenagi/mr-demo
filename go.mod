@@ -1,1 +1,1 @@
-module github.com/imrenagi/6.824
+module github.com/imrenagi/mr-demo

@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"mapreduce"
 	"os"
-	"github.com/imrenagi/6.824/src/mapreduce"
+	"strconv"
 	"strings"
 	"unicode"
-	"strconv"
 )
 
 //
@@ -23,7 +23,7 @@ func mapF(filename string, contents string) []mapreduce.KeyValue {
 	})
 	kvs := make([]mapreduce.KeyValue, 0)
 	for _, val := range tokens {
-		kvs = append(kvs, mapreduce.KeyValue{Key:val, Value:"1"})
+		kvs = append(kvs, mapreduce.KeyValue{Key: val, Value: "1"})
 	}
 	return kvs
 }
