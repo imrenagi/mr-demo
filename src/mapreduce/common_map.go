@@ -1,16 +1,16 @@
 package mapreduce
 
 import (
+	"encoding/json"
+	"fmt"
 	"hash/fnv"
 	"io/ioutil"
 	"os"
-	"fmt"
-	"encoding/json"
 )
 
 func doMap(
 	jobName string, // the name of the MapReduce job
-	mapTask int,    // which map task this is
+	mapTask int, // which map task this is
 	inFile string,
 	nReduce int, // the number of reduce task that will be run ("R" in the paper)
 	mapF func(filename string, contents string) []KeyValue,
@@ -26,14 +26,16 @@ func doMap(
 	//call map
 	kvs := mapF(inFile, content)
 
+	//create files to store the map result
 	fileMap := make(map[string]*os.File)
-
 	for i := 0; i < nReduce; i++ {
 		f, _ := os.Create(reduceName(jobName, mapTask, i))
 		defer f.Close()
 		fileMap[fmt.Sprintf("%d", i)] = f
 	}
 
+	// shuffle
+	// for every intermediary key, put the result to the correct partitioned file.
 	for _, val := range kvs {
 		hash := ihash(val.Key)
 		partitionNum := hash % nReduce

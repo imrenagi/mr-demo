@@ -1,8 +1,8 @@
 package mapreduce
 
 import (
-	"os"
 	"encoding/json"
+	"os"
 )
 
 func doReduce(
@@ -12,10 +12,10 @@ func doReduce(
 	nMap int, // the number of map tasks that were run ("M" in the paper)
 	reduceF func(key string, values []string) string,
 ) {
-
 	var intermediary map[string][]string = make(map[string][]string)
 
-	for m := 0; m<nMap; m++ {
+	//decode input file for reduce job
+	for m := 0; m < nMap; m++ {
 		fr, _ := os.Open(reduceName(jobName, m, reduceTask))
 		decoder := json.NewDecoder(fr)
 
@@ -26,7 +26,7 @@ func doReduce(
 			if err != nil {
 				break loop
 			}
-
+			//construct the intermediary kv pairs
 			if val, ok := intermediary[kv.Key]; !ok {
 				arr := make([]string, 0)
 				arr = append(arr, kv.Value)
@@ -40,7 +40,9 @@ func doReduce(
 
 	out, _ := os.Create(outFile)
 	enc := json.NewEncoder(out)
+	//run the reduce function
 	for key := range intermediary {
+		// encode it to json so it can be merged by the merger
 		enc.Encode(&KeyValue{key, reduceF(key, intermediary[key])})
 	}
 	defer out.Close()
