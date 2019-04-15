@@ -29,44 +29,43 @@ func schedule(jobName string, mapFiles []string, nReduce int, phase jobPhase, re
 
 	fmt.Printf("Schedule: %v %v tasks (%d I/Os)\n", ntasks, phase, n_other)
 
-	c := make(chan string, 100)
+	availableWorkers := make(chan string, 1000)
 
 	go func() {
 		for {
 			select {
-			case srv, isOpen := <-registerChan:
+			case worker, isOpen := <-registerChan:
 				if isOpen {
-					c <- srv
+					availableWorkers <- worker
 				}
 			}
 		}
 	}()
 
 	var wg sync.WaitGroup
-	for i := 0; i < ntasks; i++ {
+	for numTask := 0; numTask < ntasks; numTask++ {
 		wg.Add(1)
-		go func(i int, c chan string, jobName string, mapFiles []string, phase jobPhase, n_other int) {
+		go func(numTask int, availableWorkers chan string, jobName string, mapFiles []string, phase jobPhase, n_other int) {
 			success := false
 
 			for !success {
-				srv := <-c
+				workerRPCAddr := <-availableWorkers
 
-				ok := call(srv, "Worker.DoTask", DoTaskArgs{
+				ok := call(workerRPCAddr, "Worker.DoTask", DoTaskArgs{
 					JobName:       jobName,
-					File:          mapFiles[i],
+					File:          mapFiles[numTask],
 					Phase:         phase,
-					TaskNumber:    i,
+					TaskNumber:    numTask,
 					NumOtherPhase: n_other,
 				}, nil)
 				if ok {
 					wg.Done()
 					success = true
 				}
-				c <- srv
+				availableWorkers <- workerRPCAddr
 			}
 
-
-		}(i, c, jobName, mapFiles, phase, n_other)
+		}(numTask, availableWorkers, jobName, mapFiles, phase, n_other)
 	}
 	wg.Wait()
 
